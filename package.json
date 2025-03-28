@@ -1,0 +1,26 @@
+{"type": "module",
+  "bin": {
+    "weather": "./build/weather.js",
+    "batches": "./build/batches.js"
+  },
+  "scripts": {
+    "build-weather": "tsc && chmod +x build/weather.js",
+    "build": "tsc && chmod +x build/batches.js",
+    "run-weather": "node build/weather.js",
+    "run-batches": "node build/batches.js",
+    
+    "run-build": "tsc && node build/batches.js"
+
+  },
+  "files": [
+    "build"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "typescript": "^5.8.2"
+  }
+}
