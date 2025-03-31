@@ -5,38 +5,43 @@ import { z } from "zod";
 
 // Create server instance
 const server = new McpServer({
-  name: "batch-changes",
-  version: "1.0.0",
-  capabilities: {
-    resources: {},
-    tools: {},
-  },
+    name: "batch-changes",
+    version: "1.0.0",
+    capabilities: {
+        resources: {},
+        tools: {},
+    },
 });
 
-function openBashShell(command: string, options?: { cwd?: string; shell?: string; env?: NodeJS.ProcessEnv }): Promise<string> {
+function openBashShell(command: string, options?: { timeout?: number } & Record<string, any>): Promise<string> {
     return new Promise((resolve, reject) => {
         let output = '';
-        const childProcess = exec(command, options);
+        const child = exec(command, {
+            ...options,
+            timeout: 30000 // 30 second timeout
+        });
+
+        const timer = setTimeout(() => {
+            child.kill();
+            reject(new Error(`Command timed out after 30s: ${command}`));
+        }, 30000);
+
+        child.stdout?.on('data', (data) => output += data.toString());
+        child.stderr?.on('data', (data) => output += data.toString());
         
-        childProcess.stdout?.on('data', (data) => {
-            output += data.toString();
-        });
-
-        childProcess.stderr?.on('data', (data) => {
-            output += data.toString();
-        });
-
-        childProcess.on('close', (code) => {
-            if (code === 0) {
-                resolve(output);
-            } else {
-                reject(`Process exited with code ${code}`);
-            }
+        child.on('close', (code) => {
+            clearTimeout(timer);
+            if (code === 0) resolve(output);
+            else reject(new Error(`Command failed (${code}): ${output}`));
         });
     });
 }
-  
+
 async function runCommand(bashCommand: string, options?: { cwd?: string; shell?: boolean; env?: NodeJS.ProcessEnv }): Promise<string> {
+    // const hasSrcCli = await verifySrcCli();
+    // if (!hasSrcCli) {
+    //     throw new Error('src-cli not properly installed');
+    // }
     try {
         console.error(`Executing command: ${bashCommand}`);
         return await openBashShell(bashCommand);
@@ -45,6 +50,28 @@ async function runCommand(bashCommand: string, options?: { cwd?: string; shell?:
         throw error;
     }
 }
+
+
+const loginCmd = `src login ${process.env.SRC_ENDPOINT} --token=${process.env.SRC_ACCESS_TOKEN}`;
+
+
+// Add this diagnostic check at startup:
+// async function verifySrcCli() {
+//     try {
+//         // Check using absolute path
+//         const srcPath = '/usr/local/bin/src';
+//         await import('fs/promises').then(fs => fs.access(srcPath, fs.constants.X_OK));
+
+//         const version = await 
+//         // console.error('src-cli verified:', version.trim());
+//         return true;
+//     } catch (error) {
+//         console.error('src-cli verification failed. Ensure you ran:');
+//         console.error('sudo curl -L https://sourcegraph.sourcegraph.com/.api/src-cli/src_darwin_amd64 -o /usr/local/bin/src');
+//         console.error('sudo chmod +x /usr/local/bin/src');
+//         return false;
+//     }
+// }
 
 
 // Register tool
@@ -56,25 +83,39 @@ server.tool(
     },
     async ({ batchSpecPath }) => {
         try {
+            console.error('PATH:', process.env.PATH);
+
             // Check if src is available
-            console.error('Checking if src is available...');
+            console.error('Checking if `src-cli` is available...');
             try {
                 await runCommand('which src');
-                console.error('src command found!');
+                console.info('`src` command found!');
             } catch (error) {
-                console.error('src command not found in PATH');
+                console.error('!! `src` command not found in PATH');
             }
-            
+
             // Try using the local src command first
-            console.error('Attempting to use local src command');
+            console.error('Attempting to use local `src` command');
+            if (!process.env.SRC_ACCESS_TOKEN) {
+                throw new Error("SRC_ACCESS_TOKEN environment variable is required");
+            }
+            if (!process.env.SRC_ENDPOINT) {
+                throw new Error("SRC_Endpoint environment variable is required");
+            }
             const commands = [
-                'which src',        // Verify src location
-                'echo $HOME',       // Check home directory
-                'pwd',              // Check working directory
-                'src login',
-                `src batch validate -f "${batchSpecPath}"`,
-                `src batch preview -f "${batchSpecPath}"`
+                "/usr/local/bin/src version",
+                `/usr/local/bin/src login ${process.env.SRC_ENDPOINT} --token=${process.env.SRC_ACCESS_TOKEN}`,
+                `/usr/local/bin/src batch preview -f "${batchSpecPath}"`
             ];
+
+            // Add better error handling:
+            process.on('unhandledRejection', (error) => {
+                console.error('Unhandled rejection:', error);
+            });
+
+            process.on('uncaughtException', (error) => {
+                console.error('Uncaught exception:', error);
+            });
 
             let output = '';
             for (const command of commands) {
@@ -84,15 +125,8 @@ server.tool(
                     const result = await runCommand(command, {
                         cwd: process.cwd(), // Explicitly set working directory
                         shell: true,        // Enable shell features
-                        env: {              // Ensure environment variables are passed
-                            ...process.env,
-                            HOME: process.env.HOME,
-                            PATH: process.env.PATH,
-                            SRC_ENDPOINT: 'https://sourcegraph.sourcegraph.com',
-                            SRC_ACCESS_TOKEN: ''
-                        }
                     });
-                    console.error(`[DEBUG] Command succeeded with output: ${result}`);
+                    console.info(`[DEBUG] Command succeeded with output: ${result}`);
                     output += `${command}: ${result}\n`;
                 } catch (error) {
                     console.error(`[DEBUG] Command failed with error:`, error);
@@ -116,11 +150,25 @@ server.tool(
     }
 );
 
+server.prompt(
+    "resources/list",
+    async () => {
+      return { resources: [], messages: [] }; // Return empty array if no resources
+    }
+  );
+  
+  server.prompt(
+    "prompts/list", 
+    async () => {
+      return { prompts: [], messages: [] }; // Return empty array if no prompts
+    }
+  );
+
 async function main() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
     console.error("Batch changes MCP Server running on stdio");
-  }
+}
 
 main().catch((error) => {
     console.error("Fatal error in main():", error);
