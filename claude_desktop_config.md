@@ -1,19 +1,34 @@
-## Latest working Claude Desktop JSON doc:
-
-```json
 {
   "mcpServers": {
-    "batch-changes": {
+    "batchchanges": {
+      "command": "npx",
+      "args": [
+        "mcp-bc"
+      ],
+      "env": {
+        "SOURCEGRAPH_TOKEN": "<your key here>",
+        "SOURCEGRAPH_URL": "https://sourcegraph.sourcegraph.com"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/audrey.lorberfeld/Desktop",  // These are the dirs you give the LLM access to write to
+        "/Users/audrey.lorberfeld/Desktop/src/test-mcp/src"  // These are the dirs you give the LLM access to write to
+      ]
+    },
+    "execute-batch-change-spec": {
       "command": "node",
       "args": [
         "/Users/audrey.lorberfeld/Desktop/src/test-mcp/build/batches.js"
       ],
       "env": {
         "SRC_ENDPOINT": "https://sourcegraph.sourcegraph.com",
-        "SRC_ACCESS_TOKEN": "<your access token here>",
-        "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
-        "HOME": "/Users/audrey.lorberfeld"
-        
+        "SRC_ACCESS_TOKEN": "<your key here>",
+        "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",  // your `src-cli` path
+        "HOME": "/Users/audrey.lorberfeld"  // your $HOME path
       },
       "permissions": {
         "allow_local_tool_execution": true,
@@ -26,4 +41,3 @@
     }
   }
 }
-```
