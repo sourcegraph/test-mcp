@@ -1,5 +1,6 @@
 ## Latest working Claude Desktop JSON doc:
 
+```json
 {
   "mcpServers": {
     "batch-changes": {
@@ -25,3 +26,4 @@
     }
   }
 }
+```
