@@ -1,0 +1,29 @@
+version: 2
+name: audrey-was-here
+description: Add a line saying "Audrey was here" to README.md files
+
+# Find repositories that contain a README.md file
+on:
+  - repositoriesMatchingQuery: file:README.md count:2
+
+# In each repository, add the line to the README.md file
+steps:
+  - run: |
+      echo "" >> README.md
+      echo "Audrey was here" >> README.md
+    container: alpine:3
+
+# Describe the changeset (e.g., GitHub pull request) you want for each repository
+changesetTemplate:
+  title: Add Audrey's signature to README
+  body: |
+    This change adds a line to the README.md file indicating that Audrey was here.
+    
+    The added line is:
+    ```
+    Audrey was here
+    ```
+  branch: audrey-signature
+  commit:
+    message: Add "Audrey was here" to README.md
+  published: false

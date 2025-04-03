@@ -63,8 +63,8 @@ server.resource(
 
 // Register tool
 server.tool(
-    "generate-draft-batch-change",
-    "Generate a draft batch change",
+    "execute-batch-change-spec",
+    "Execute (push up to s2) a draft batch change",
     {
         batchSpecPath: z.string().describe("The local file path of the batch spec ")
     },
