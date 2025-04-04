@@ -1,7 +1,7 @@
 # `src-cli` MCP Server
 This is a proof-of-concept (POC) for a MCP server that can be used to run batch changes via [the `src-cli` tool](https://sourcegraph.com/docs/cli/quickstart).
 
-It works with Claude Desktop as the [MCP host](https://modelcontextprotocol.io/docs/concepts/architecture). 
+It works with Claude Desktop as the [MCP client](https://modelcontextprotocol.io/docs/concepts/architecture). 
 
 This POC takes a local file path to [a batch change spec file](https://sourcegraph.com/docs/batch-changes) and uploads it to Sourcegraph via the `src-cli` tool.
 
