@@ -27,8 +27,7 @@ pnpm run-build
 ```
 
 ## Tell Claude Desktop about your server
-In order for Claude Desktop to know about your MCP server, you need to add it to [its configuration]
-(https://modelcontextprotocol.io/quickstart/user). Fine your local `claude_desktop_config.json` file and add the 
+In order for Claude Desktop to know about your MCP server, you need to add it to [its configuration](https://modelcontextprotocol.io/quickstart/user). Fine your local `claude_desktop_config.json` file and add the 
 following, replacing necessary values with your own:
 ```json
 {
