@@ -1,3 +1,4 @@
+```json
 {
   "mcpServers": {
     "batchchanges": { // Bee's MCP Server for generating batch spec files (can ignore or add as you see fit)
@@ -38,6 +39,7 @@
         "allow_system_binaries": true,
         "allow_debugging": true
       }
+```
     }
   }
 }
